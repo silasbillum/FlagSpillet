@@ -3,6 +3,7 @@
 @using FlagSpillet.Models;
 @inject NavigationManager NavManager
 @inject IHttpClientFactory HttpClientFactory;
+@inject IJSRuntime JS
 
 <div class="text-center">
     <EditForm class="form--signin mb-4" Model="userDTO" OnValidSubmit="LoginTask">
@@ -28,7 +29,7 @@
     </EditForm>
 
     <p>@message</p>
-    
+
 </div>
 
 
@@ -44,7 +45,8 @@
             if(response.IsSuccessStatusCode){
                 var result = await response.Content.ReadFromJsonAsync<LoginResult>();
                 var username = result?.Username;
-                message = "Login successful";
+                await JS.InvokeVoidAsync("localStorage.setItem", "username", username);
+                Console.WriteLine("Login successful");
                 NavManager.NavigateTo("/");
             } else {
                 message = "Login failed";

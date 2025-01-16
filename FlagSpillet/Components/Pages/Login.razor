@@ -1,0 +1,95 @@
+﻿@page "/login"
+@inject HttpClient Http
+@using FlagSpillet.Models;
+@inject NavigationManager navigaton;
+@inject IHttpClientFactory HttpClientFactory;
+
+<div class="text-center">
+    <EditForm class="form--signin mb-4" Model="@_credential" OnValidSubmit="ClickToLogin">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <InputText class="form-control" id="username" aria-describedby="emailHelp" placeholder="Username" @bind-Value="@_credential.Username" />
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <InputText class="form-control" id="email" aria-describedby="emailHelp" placeholder="Email" @bind-Value="@_credential.Email" />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <InputText type="password" class="form-control" id="password" placeholder="Password" @bind-Value="@_credential.Password" />
+        </div>
+
+        <div class="form-group">
+            <button type="submit" id="login" name="login" class="btn btn-primary" disabled="@isLoading">
+                @(isLoading ? "Loading..." : "Login")
+            </button>
+        </div>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p class="@((isError ? "text-danger" : "text-success"))">@message</p>
+    }
+</div>
+
+
+<h3>Login</h3>
+@code {
+    private bool isLoading;
+    private string message = "";
+    private bool isError;
+    private string username = "";
+    private string email = "";
+    private string password = "";
+    private List<User>? users;
+    private User _credential = new User();
+
+    protected override async Task OnInitializedAsync(){
+
+        users = await Http.GetFromJsonAsync<List<User>>("https://apiforflaggame.onrender.com/api/User");
+    }
+
+    private async void ClickToLogin()
+    {
+        isLoading = true;
+        message = "";
+        try
+        {
+        var content = new MultipartFormDataContent
+        {
+            { new StringContent(username), "Username" },
+            { new StringContent(email), "Email" },
+            { new StringContent(password), "Password" }
+        };
+
+            var response = await Http.PostAsync("https://apiforflaggame.onrender.com/api/User", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Bruger oprettet succesfuldt!";
+                isError = false;
+                await Task.Delay(2000); // Vent 2 sekunder
+               
+            }
+            
+         else
+        {
+            message = "Kunne ikke oprette brugeren. Prøv igen.";
+            isError = true;
+        }
+    }
+    catch (Exception ex)
+    {
+    message = $"Der opstod en fejl: {ex.Message}"; // Error message
+    isError = true;
+    }
+    finally
+    {
+    isLoading = false; // End loading state
+    }
+}
+    
+
+}

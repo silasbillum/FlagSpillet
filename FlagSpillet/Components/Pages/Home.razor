@@ -1,0 +1,253 @@
+﻿@page "/"
+@inject HttpClient Http
+@using System.Text.Json;
+@using Majorsoft.Blazor.Components.Timer
+@using System.Reflection
+@inject NavigationManager _navigationManager
+@if (countries != null)
+{
+    <h2>Whats the name of this country?</h2>
+    <h2>@score</h2>
+    <h2>@chanceCounter</h2>
+
+
+    <div class="Box">
+        <div style=" width: 550px; height: 300px;background-color:white">
+
+        <img src="@flagURL" style="width: 550px; height: 300px;background-color:white;" />
+        </div>
+
+        <br />
+
+
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" aria-label="Sizing example input" 
+            aria-describedby="inputGroup-sizing-default" @bind="@inputValue">
+        </div>
+
+        <button type="button" class="btn btn-primary" @onclick="ButtonClick">Answer</button>
+    </div>
+}
+
+
+<span>Timer: <strong>@_count</strong></span>
+<AdvancedTimer @ref="_counter" IntervalInMilisec="1000"Occurring="Times.Exactly(60)" OnIntervalElapsed="@(c => Counter(c))" />
+
+<br />
+
+
+@if (_showModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h3>Time's Up!</h3>
+            <p>You got @score points.</p>
+            <button class="btn btn-primary" @onclick="CloseModal">Close</button>
+        </div>
+    </div>
+}
+
+@code{
+    private List<Country>? countries;
+    private int i;  
+    Random random = new Random();
+    private string flagURL;
+    private string inputValue;
+    private int chanceCounter;
+    private int score;
+    private Country globalCountry;
+
+    private AdvancedTimer _counter;
+    private ulong _count = 200;
+    private bool _showModal = false;
+    private void Counter(ulong IntervalCount)
+    {
+        if(_count > 0)
+        {
+            _count = 200 - IntervalCount;
+        }
+        else if(_count == 0)
+        {
+            _showModal = true;
+        }
+    }
+    private void CloseModal()
+    {
+        _navigationManager.NavigateTo("/", true);
+    }
+   
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch the data from the API
+        countries = await Http.GetFromJsonAsync<List<Country>>("https://restcountries.com/v3.1/all?fields=name,flags");
+
+        GetRandomFlag();
+    }
+
+    private void ButtonClick()
+    {
+        if (inputValue == globalCountry.name.common && chanceCounter == 0
+    || inputValue == globalCountry.name.official && chanceCounter == 0)
+        {
+            score = score + 3;
+            GetRandomFlag();
+            chanceCounter = 0;
+        }
+        else if (inputValue == globalCountry.name.common && chanceCounter == 1
+            || inputValue == globalCountry.name.official && chanceCounter == 1)
+        {
+            score = score + 2;
+            GetRandomFlag();
+            chanceCounter = 0;
+        }
+        else if (inputValue == globalCountry.name.common && chanceCounter == 2
+            || inputValue == globalCountry.name.official && chanceCounter == 2)
+        {
+            score = score + 1;
+            GetRandomFlag();
+            chanceCounter = 0;
+        }
+        else if (chanceCounter == 3)
+        {
+            GetRandomFlag();
+            chanceCounter = 0;
+        }
+        else
+        {
+            chanceCounter++;
+        }
+    }
+
+    private void GetRandomFlag()
+    {
+        if (countries.Count > 0)
+        {
+            i = random.Next(countries.Count); // Generate a random index
+            flagURL = countries[i].flags.png; // Access the Common name property
+            globalCountry = countries[i];
+        }
+        else
+        {
+            flagURL = "No countries available!";
+        }
+    }
+
+
+    public class Country
+    {
+        public Flag flags { get; set; }
+        public Name name { get; set; }
+    }
+
+    public class Flag
+    {
+        public string png { get; set; }
+    }
+
+    public class Name
+    {
+        public string common { get; set; }
+        public string official { get; set; }
+    }
+}
+
+<style>
+    
+    .modal-overlay{
+        display: flex;
+        flex-direction: column;
+        width: 650px;
+        height: 500px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        background-color: #ced4da;
+        animation: fadeIn 0.5s ease-in;
+        isolation: isolate;
+        position: absolute; /* Change to absolute for better centering */
+        left: 50%;
+        top: 30%;
+        transform: translate(-50%, -50%); /* Adjust the element to truly center it */
+        
+    }
+
+    .Box {
+        display: flex;
+        flex-direction: column;
+        width: 650px;
+        height: 500px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        background-color: #ced4da;
+        animation: fadeIn 0.5s ease-in;
+        isolation: isolate;
+        position: absolute; /* Change to absolute for better centering */
+        left: 50%;
+        top: 30%;
+        transform: translate(-50%, -50%); /* Adjust the element to truly center it */
+    }
+
+
+    .textbox {
+        display: flex; /* Enables Flexbox layout */
+        justify-content: center; /* Centers horizontally */
+        align-items: center; /* Centers vertically */
+        font-weight: bold; /* Makes the text bold */
+       
+    }
+
+    .codepen-button {
+        display: block;
+        cursor: pointer;
+        color: white;
+        margin: 0 auto;
+        position: relative;
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 6px;
+        overflow: hidden;
+        padding: 3px;
+        isolation: isolate;
+        width: 300px;
+    }
+
+        .codepen-button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 400%;
+            height: 100%;
+            background: linear-gradient(115deg,#4fcf70,#fad648,#a767e5,#12bcfe,#44ce7b);
+            background-size: 25% 100%;
+            animation: an-at-keyframe-css-at-rule-that-translates-via-the-transform-property-the-background-by-negative-25-percent-of-its-width-so-that-it-gives-a-nice-border-animation_-We-use-the-translate-property-to-have-a-nice-transition-so-it_s-not-a-jerk-of-a-start-or-stop .75s linear infinite;
+            animation-play-state: paused;
+            translate: -5% 0%;
+            transition: translate 0.25s ease-out;
+        }
+
+        .codepen-button:hover::before {
+            animation-play-state: running;
+            transition-duration: 0.75s;
+            translate: 0% 0%;
+        }
+
+    @@keyframes an-at-keyframe-css-at-rule-that-translates-via-the-transform-property-the-background-by-negative-25-percent-of-its-width-so-that-it-gives-a-nice-border-animation_-We-use-the-translate-property-to-have-a-nice-transition-so-it_s-not-a-jerk-of-a-start-or-stop {
+        to {
+            transform: translateX(-25%);
+        }
+    }
+
+    .codepen-button span {
+        position: relative;
+        display: block;
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+        background: #000;
+        border-radius: 3px;
+        height: 100%;
+    }
+
+</style>

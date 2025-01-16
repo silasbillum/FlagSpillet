@@ -1,95 +1,57 @@
 ﻿@page "/login"
 @inject HttpClient Http
 @using FlagSpillet.Models;
-@inject NavigationManager navigaton;
+@inject NavigationManager NavManager
 @inject IHttpClientFactory HttpClientFactory;
 
 <div class="text-center">
-    <EditForm class="form--signin mb-4" Model="@_credential" OnValidSubmit="ClickToLogin">
+    <EditForm class="form--signin mb-4" Model="userDTO" OnValidSubmit="LoginTask">
         <div class="form-group">
             <label for="username">Username</label>
-            <InputText class="form-control" id="username" aria-describedby="emailHelp" placeholder="Username" @bind-Value="@_credential.Username" />
+            <InputText class="form-control" id="username" aria-describedby="emailHelp" placeholder="Username" @bind-Value="@userDTO.Username" required />
         </div>
 
         <div class="form-group">
             <label for="email">Email</label>
-            <InputText class="form-control" id="email" aria-describedby="emailHelp" placeholder="Email" @bind-Value="@_credential.Email" />
+            <InputText class="form-control" id="email" aria-describedby="emailHelp" placeholder="Email" @bind-Value="@userDTO.Email" required />
         </div>
 
         <div class="form-group">
             <label for="password">Password</label>
-            <InputText type="password" class="form-control" id="password" placeholder="Password" @bind-Value="@_credential.Password" />
+            <InputText type="password" class="form-control" id="password" placeholder="Password" @bind-Value="@userDTO.Password" required />
         </div>
 
         <div class="form-group">
-            <button type="submit" id="login" name="login" class="btn btn-primary" disabled="@isLoading">
-                @(isLoading ? "Loading..." : "Login")
+            <button type="submit" id="login" name="login" class="btn btn-primary">Login
             </button>
         </div>
     </EditForm>
 
-    @if (!string.IsNullOrEmpty(message))
-    {
-        <p class="@((isError ? "text-danger" : "text-success"))">@message</p>
-    }
+    <p>@message</p>
+    
 </div>
 
 
-<h3>Login</h3>
 @code {
-    private bool isLoading;
     private string message = "";
-    private bool isError;
-    private string username = "";
-    private string email = "";
-    private string password = "";
-    private List<User>? users;
-    private User _credential = new User();
+    public UserDTO userDTO = new UserDTO();
 
-    protected override async Task OnInitializedAsync(){
+    private async Task LoginTask() {
+        try {
+            var response = await Http.PostAsJsonAsync("https://apiforflaggame-h9w2.onrender.com/api/User/login", userDTO);
+            Console.WriteLine(response);
 
-        users = await Http.GetFromJsonAsync<List<User>>("https://apiforflaggame.onrender.com/api/User");
-    }
-
-    private async void ClickToLogin()
-    {
-        isLoading = true;
-        message = "";
-        try
-        {
-        var content = new MultipartFormDataContent
-        {
-            { new StringContent(username), "Username" },
-            { new StringContent(email), "Email" },
-            { new StringContent(password), "Password" }
-        };
-
-            var response = await Http.PostAsync("https://apiforflaggame.onrender.com/api/User", content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                message = "Bruger oprettet succesfuldt!";
-                isError = false;
-                await Task.Delay(2000); // Vent 2 sekunder
-               
+            if(response.IsSuccessStatusCode){
+                var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+                var username = result?.Username;
+                message = "Login successful";
+                NavManager.NavigateTo("/");
+            } else {
+                message = "Login failed";
             }
-            
-         else
-        {
-            message = "Kunne ikke oprette brugeren. Prøv igen.";
-            isError = true;
+        } catch (Exception ex){
+            message = $"Der skete en fejl: {ex.Message}";
         }
     }
-    catch (Exception ex)
-    {
-    message = $"Der opstod en fejl: {ex.Message}"; // Error message
-    isError = true;
-    }
-    finally
-    {
-    isLoading = false; // End loading state
-    }
-}
     
-
 }

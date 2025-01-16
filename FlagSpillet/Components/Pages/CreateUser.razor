@@ -1,0 +1,63 @@
+﻿@page "/createUser"
+@inject NavigationManager NavManager
+@inject HttpClient Http
+
+@using System.ComponentModel.DataAnnotations
+@using System.Net.Http
+
+<p>Sign up page</p>
+
+<EditForm class="form--signin mb-4" Model="signUpModel" OnValidSubmit="SignUpScript">
+    <div class="form-group">
+        <label for="username">Username</label>
+        <InputText class="form-control" id="username" aria-describedby="emailHelp" placeholder="Username" @bind-Value="@signUpModel.Username" required />
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email</label>
+        <InputText class="form-control" id="email" aria-describedby="emailHelp" placeholder="Email" @bind-Value="@signUpModel.Email" required />
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <InputText type="password" class="form-control" id="password" placeholder="Password" @bind-Value="@signUpModel.Password" required />
+    </div>
+
+    <div class="form-group">
+        <button type="submit" id="login" name="login" class="btn btn-primary">
+            Create user
+        </button>
+    </div>
+</EditForm>
+
+<p>@responseMessage</p>
+
+
+@code {
+    private string responseMessage = "";
+    public UserDTO signUpModel = new UserDTO();
+
+
+
+    private async Task SignUpScript()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("https://apiforflaggame-h9w2.onrender.com/api/User/createUser", signUpModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                responseMessage = "Sign-up successful!";
+                NavManager.NavigateTo("/");
+            }
+            else
+            {
+                responseMessage = "Sign-up failed!";
+            }
+        }
+        catch (Exception ex)
+        {
+            responseMessage = $"Der skete en fejl: {ex.Message}";
+        }
+    }
+}

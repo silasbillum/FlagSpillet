@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  silasapi:
+    image: silasapi
+    build:
+      context: .
+      dockerfile: BackendAPI/Dockerfile
+    ports:
+      - "7180:80"
+      - "7181:443"
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: "7181"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https-certs/your_cert.pfx"
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "test"
+    volumes:
+      - ./certs:/https-certs:ro
+    secrets:
+      - cert-password
+secrets:
+  cert-password:
+    external: true

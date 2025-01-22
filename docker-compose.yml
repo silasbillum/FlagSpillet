@@ -4,7 +4,7 @@ services:
     image: billumapi
     build:
       context: .
-      dockerfile: BackendAPI/Dockerfile
+      dockerfile: FlagSpillet/Dockerfile
     ports:
       - "7180:80"
       - "7181:443"
